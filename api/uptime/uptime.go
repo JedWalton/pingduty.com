@@ -27,15 +27,15 @@ type PingConfig struct {
 	notificationInterval time.Duration
 }
 
-func HealthCheckScheduler(endpoints map[string]*EndpointState,
-	pingConfig PingConfig, keysForNotifications KeysForNotifications) {
-	ticker := time.NewTicker(pingConfig.pingFrequency)
+func HealthCheckScheduler(bespokeConfig BespokeConfig) {
+	ticker := time.NewTicker(bespokeConfig.pingConfig.pingFrequency)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		for name, state := range endpoints {
-			go checkEndpointHealth(name, state, pingConfig.notificationInterval,
-				keysForNotifications)
+		for name, state := range bespokeConfig.endpoints {
+			go checkEndpointHealth(name, state,
+				bespokeConfig.pingConfig.notificationInterval,
+				bespokeConfig.keysFornotifications)
 		}
 	}
 }
