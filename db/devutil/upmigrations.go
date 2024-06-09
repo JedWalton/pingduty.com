@@ -2,12 +2,13 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
+	"os"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -23,12 +24,11 @@ func (l LoggerAdapter) Verbose() bool {
 }
 
 func main() {
-	user := "postgres"
-	password := "mysecretpassword"
-	dbname := "devdb"
-	host := "localhost" // or adjust as necessary
+	if err := godotenv.Load("../../.env"); err != nil {
+		log.Println("No .env file found, using environment variables")
+	}
 
-	connectionString := fmt.Sprintf("postgres://%s:%s@%s:5432/%s?sslmode=disable", user, password, host, dbname)
+	connectionString := os.Getenv("POSTGRES_URL")
 
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
