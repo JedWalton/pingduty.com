@@ -2,8 +2,8 @@ package auth
 
 import (
 	"database/sql"
+
 	_ "github.com/lib/pq"
-	"i-couldve-got-six-reps/api/auth/dtos"
 )
 
 type Repository struct {
@@ -14,8 +14,8 @@ func NewUserRepository(db *sql.DB) Repository {
 	return Repository{DB: db}
 }
 
-func (repo *Repository) GetUserByUsername(username string) (*dtos.User, error) {
-	var user dtos.User
+func (repo *Repository) GetUserByUsername(username string) (*User, error) {
+	var user User
 	err := repo.DB.QueryRow("SELECT id, username, password_hash FROM users WHERE username = $1", username).Scan(&user.ID, &user.Username, &user.PasswordHash)
 	if err != nil {
 		return nil, err

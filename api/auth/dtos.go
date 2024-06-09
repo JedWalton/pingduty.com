@@ -1,4 +1,4 @@
-package dtos
+package auth
 
 type User struct {
 	ID           int

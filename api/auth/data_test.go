@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"i-couldve-got-six-reps/api/db"
+	"pingduty.com/api/db"
 	"testing"
 )
 

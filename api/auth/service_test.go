@@ -2,12 +2,13 @@ package auth
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"golang.org/x/crypto/bcrypt"
-	"i-couldve-got-six-reps/api/db"
 	"os"
+	"pingduty.com/api/db"
 	"strings"
 	"testing"
+
+	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestCreateAndAuthenticateUser(t *testing.T) {
