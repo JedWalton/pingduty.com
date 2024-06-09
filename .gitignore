@@ -210,3 +210,5 @@ build/
 
 /server_utils/database_backups/*
 /database/
+
+*postgres-volume
