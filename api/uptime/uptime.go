@@ -46,13 +46,11 @@ func checkEndpointHealth(name string, state *EndpointState,
 	currentTime := time.Now()
 
 	if err != nil || resp.StatusCode != http.StatusOK ||
-		resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+		resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		if !state.IsDown {
 			state.IsDown = true
-			// Record the time when the service first went down
 			state.DownSince = currentTime
 			state.LastNotification = currentTime
-			// Initially, down time is 0
 			notifyChannel(name, "DOWN", 0, keysForNotifications)
 		} else if currentTime.Sub(state.LastNotification) >= notifyInterval {
 			downDuration := currentTime.Sub(state.DownSince)

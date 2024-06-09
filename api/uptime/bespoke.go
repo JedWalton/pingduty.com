@@ -13,7 +13,7 @@ func pingduty() {
 	// Configuration
 	endpoints := map[string]*EndpointState{
 		"pingduty": {
-			URL:              "http://pingduty.com",
+			URL:              "https://www.pingduty.com",
 			IsDown:           false,
 			LastNotification: time.Now(),
 		},
