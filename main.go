@@ -17,6 +17,12 @@ type EndpointState struct {
 
 type KeysForNotifications struct {
 	discordWebhookURL string
+	anotherWebhookURL string
+}
+
+type PingConfig struct {
+	pingFrequency        time.Duration
+	notificationInterval time.Duration
 }
 
 func pingduty() {
@@ -33,35 +39,43 @@ func pingduty() {
 			LastNotification: time.Now(),
 		},
 	}
-	pingFrequency := 1 * time.Second        // Frequency of health checks
-	notificationInterval := 2 * time.Second // Interval for re-notification
+
+	pingConfig := PingConfig{
+		pingFrequency:        1 * time.Second,
+		notificationInterval: 2 * time.Second,
+	}
 
 	// Start health checks
-	HealthCheckScheduler(endpoints, pingFrequency, notificationInterval, keysForNotifications)
+	HealthCheckScheduler(endpoints, pingConfig, keysForNotifications)
 }
 
-func HealthCheckScheduler(endpoints map[string]*EndpointState, frequency,
-	notifyInterval time.Duration, keysForNotifications KeysForNotifications) {
-	ticker := time.NewTicker(frequency)
+func HealthCheckScheduler(endpoints map[string]*EndpointState,
+	pingConfig PingConfig, keysForNotifications KeysForNotifications) {
+	ticker := time.NewTicker(pingConfig.pingFrequency)
 	defer ticker.Stop()
 
 	for range ticker.C {
 		for name, state := range endpoints {
-			go checkEndpointHealth(name, state, notifyInterval, keysForNotifications)
+			go checkEndpointHealth(name, state, pingConfig.notificationInterval,
+				keysForNotifications)
 		}
 	}
 }
 
-func checkEndpointHealth(name string, state *EndpointState, notifyInterval time.Duration, keysForNotifications KeysForNotifications) {
+func checkEndpointHealth(name string, state *EndpointState,
+	notifyInterval time.Duration, keysForNotifications KeysForNotifications) {
 	resp, err := http.Get(state.URL)
 	currentTime := time.Now()
 
-	if err != nil || resp.StatusCode != http.StatusOK {
+	if err != nil || resp.StatusCode != http.StatusOK ||
+		resp.StatusCode >= 200 && resp.StatusCode <= 299 {
 		if !state.IsDown {
 			state.IsDown = true
-			state.DownSince = currentTime // Record the time when the service first went down
+			// Record the time when the service first went down
+			state.DownSince = currentTime
 			state.LastNotification = currentTime
-			notifyChannel(name, "DOWN", 0, keysForNotifications) // Initially, down time is 0
+			// Initially, down time is 0
+			notifyChannel(name, "DOWN", 0, keysForNotifications)
 		} else if currentTime.Sub(state.LastNotification) >= notifyInterval {
 			downDuration := currentTime.Sub(state.DownSince)
 			state.LastNotification = currentTime
@@ -80,10 +94,12 @@ func checkEndpointHealth(name string, state *EndpointState, notifyInterval time.
 	}
 }
 
-func notifyChannel(serviceName, status string, duration time.Duration, keysForNotifications KeysForNotifications) {
+func notifyChannel(serviceName, status string, duration time.Duration,
+	keysForNotifications KeysForNotifications) {
 	message := fmt.Sprintf("Service %s is %s", serviceName, status)
 	if duration > 0 {
-		message += fmt.Sprintf(" for %s", duration.Truncate(time.Second)) // Truncate to remove microseconds
+		// Truncate to remove microseconds
+		message += fmt.Sprintf(" for %s", duration.Truncate(time.Second))
 	}
 
 	// Implement notification logic here to use discordWebhookURL
@@ -93,7 +109,15 @@ func notifyChannel(serviceName, status string, duration time.Duration, keysForNo
 		// Placeholder for actual notification implementation
 		notifyDiscord(message, keysForNotifications.discordWebhookURL)
 	}
+	if keysForNotifications.anotherWebhookURL != "" {
+		// Placeholder for actual notification implementation
+		notifyAnotherWebhook(message, keysForNotifications.anotherWebhookURL)
+	}
 
+}
+
+func notifyAnotherWebhook(message, s string) {
+	panic("unimplemented")
 }
 
 func notifyDiscord(message string, discordWebhookURL string) {
