@@ -2,13 +2,12 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
-	"os"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -24,11 +23,12 @@ func (l LoggerAdapter) Verbose() bool {
 }
 
 func main() {
-	if err := godotenv.Load("../../.env"); err != nil {
-		log.Println("No .env file found, using environment variables")
-	}
+	user := "postgres"
+	password := "mysecretpassword"
+	dbname := "devdb"
+	host := "localhost" // or adjust as necessary
 
-	connectionString := os.Getenv("POSTGRES_URL")
+	connectionString := fmt.Sprintf("postgres://%s:%s@%s:5432/%s?sslmode=disable", user, password, host, dbname)
 
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
@@ -40,6 +40,11 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	log.Println("Successfully connected to the database!")
+
+	log.Println("Clearing tables in devdb before migration...")
+	if err = clearTables(db); err != nil {
+		log.Fatalf("Failed to clear tables: %v", err)
+	}
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
@@ -65,4 +70,25 @@ func main() {
 	} else {
 		log.Println("Migrations applied successfully!")
 	}
+}
+
+func clearTables(db *sql.DB) error {
+	query := `
+    DO
+    $$
+    DECLARE
+        _tbl text;
+    BEGIN
+        FOR _tbl IN
+            SELECT tablename
+            FROM pg_tables
+            WHERE schemaname = 'public'
+        LOOP
+            EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(_tbl) || ' CASCADE';
+        END LOOP;
+    END
+    $$
+    ;`
+	_, err := db.Exec(query)
+	return err
 }
