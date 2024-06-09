@@ -1,2 +1,2 @@
-( set -a; source .env.production.local; set +a; psql $POSTGRESQL_URL )
+( set -a; source .env.local.production; set +a; psql $POSTGRES_URL )
 
